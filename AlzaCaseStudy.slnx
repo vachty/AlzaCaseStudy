@@ -1,3 +1,4 @@
 <Solution>
-  <Project Path="AggregationService/AggregationService.csproj" />
+  <Project Path="AggregationService.Domain/AggregationService.Domain.csproj" Id="9a6e06d5-e7ef-4f21-a397-d7a2eb77267e" />
+  <Project Path="AggregationService/AggregationService.API.csproj" />
 </Solution>
