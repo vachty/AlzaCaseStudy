@@ -3,104 +3,103 @@ using AggregationService.Application.Connector;
 using AggregationService.Application.Contracts;
 using Microsoft.Extensions.Logging;
 
-namespace AggregationService.Application.Services
+namespace AggregationService.Application.Services;
+
+/// <summary>
+/// The service for product aggregation
+/// </summary>
+public class ProductAggregationService(
+        IProductServiceClient productServiceClient,
+        IPricingServiceClient pricingServiceClient,
+        IStockServiceClient stockServiceClient,
+        ILogger<ProductAggregationService> logger,
+        AggregatedProductMemoryCache memoryCache) : IProductAggregationService
 {
     /// <summary>
-    /// The service for product aggregation
+    /// Gets the aggregated product
     /// </summary>
-    public class ProductAggregationService(
-            IProductServiceClient productServiceClient,
-            IPricingServiceClient pricingServiceClient,
-            IStockServiceClient stockServiceClient,
-            ILogger<ProductAggregationService> logger,
-            AggregatedProductMemoryCache memoryCache) : IProductAggregationService
+    /// <param name="productId"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
+    public async Task<AggregatedProductDto?> GetByIdAsync(string productId, CancellationToken cancellationToken = default)
     {
-        /// <summary>
-        /// Gets the aggregated product
-        /// </summary>
-        /// <param name="productId"></param>
-        /// <param name="cancellationToken"></param>
-        /// <returns></returns>
-        public async Task<AggregatedProductDto?> GetByIdAsync(string productId, CancellationToken cancellationToken = default)
-        {
-            return await memoryCache.GetOrCreateAsync(
-                productId,
-                async ct =>
+        return await memoryCache.GetOrCreateAsync(
+            productId,
+            async ct =>
+            {
+                var degraded = new List<string>();
+
+                var productTask = SafeExecuteAsync(
+                    () => productServiceClient.GetProductAsync(productId, ct),
+                    "ProductService",
+                    degraded);
+
+                var pricingTask = SafeExecuteAsync(
+                    () => pricingServiceClient.GetPriceAsync(productId, ct),
+                    "PricingService",
+                    degraded);
+
+                var stockTask = SafeExecuteAsync(
+                    () => stockServiceClient.GetStockAsync(productId, ct),
+                    "StockService",
+                    degraded);
+
+                await Task.WhenAll(productTask, pricingTask, stockTask);
+
+                var product = await productTask;
+                var price = await pricingTask;
+                var stock = await stockTask;
+
+                if (product is null)
                 {
-                    var degraded = new List<string>();
+                    logger.LogWarning(
+                        "Unable to aggregate product {ProductId} because product data is missing.",
+                        productId);
 
-                    var productTask = SafeExecuteAsync(
-                        () => productServiceClient.GetProductAsync(productId, ct),
-                        "ProductService",
-                        degraded);
+                    return null;
+                }
 
-                    var pricingTask = SafeExecuteAsync(
-                        () => pricingServiceClient.GetPriceAsync(productId, ct),
-                        "PricingService",
-                        degraded);
+                return new AggregatedProductDto
+                {
+                    ProductId = product.Id,
+                    Name = product.Name,
+                    ImageUrl = product.ImageUrl,
+                    Price = price?.Amount,
+                    Currency = price?.Currency,
+                    IsAvailable = stock?.InStock ?? false,
+                    StockQuantity = stock?.Quantity,
+                    Degraded = degraded
+                };
+            },
+            cancellationToken);
+    }
 
-                    var stockTask = SafeExecuteAsync(
-                        () => stockServiceClient.GetStockAsync(productId, ct),
-                        "StockService",
-                        degraded);
-
-                    await Task.WhenAll(productTask, pricingTask, stockTask);
-
-                    var product = await productTask;
-                    var price = await pricingTask;
-                    var stock = await stockTask;
-
-                    if (product is null)
-                    {
-                        logger.LogWarning(
-                            "Unable to aggregate product {ProductId} because product data is missing.",
-                            productId);
-
-                        return null;
-                    }
-
-                    return new AggregatedProductDto
-                    {
-                        ProductId = product.Id,
-                        Name = product.Name,
-                        ImageUrl = product.ImageUrl,
-                        Price = price?.Amount,
-                        Currency = price?.Currency,
-                        IsAvailable = stock?.InStock ?? false,
-                        StockQuantity = stock?.Quantity,
-                        Degraded = degraded
-                    };
-                },
-                cancellationToken);
-        }
-
-        /// <summary>
-        /// Executes the given action
-        /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="action"></param>
-        /// <param name="dependencyName"></param>
-        /// <param name="degraded"></param>
-        /// <returns></returns>
-        private async Task<T?> SafeExecuteAsync<T>(
-            Func<Task<T?>> action,
-            string dependencyName,
-            List<string> degraded)
+    /// <summary>
+    /// Executes the given action
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    /// <param name="action"></param>
+    /// <param name="dependencyName"></param>
+    /// <param name="degraded"></param>
+    /// <returns></returns>
+    private async Task<T?> SafeExecuteAsync<T>(
+        Func<Task<T?>> action,
+        string dependencyName,
+        List<string> degraded)
+    {
+        try
         {
-            try
-            {
-                return await action();
-            }
-            catch (Exception ex)
-            {
-                logger.LogWarning(
-                    ex,
-                    "Dependency {DependencyName} failed. Falling back to partial response.",
-                    dependencyName);
+            return await action();
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(
+                ex,
+                "Dependency {DependencyName} failed. Falling back to partial response.",
+                dependencyName);
 
-                degraded.Add(dependencyName);
-                return default;
-            }
+            degraded.Add(dependencyName);
+            return default;
         }
     }
 }
