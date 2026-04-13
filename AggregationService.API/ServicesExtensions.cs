@@ -1,5 +1,6 @@
 ﻿using AggregationService.API.Configuration;
 using AggregationService.Application.Connector;
+using AggregationService.Application.Contracts;
 using AggregationService.Application.Services;
 using AggregationService.Infrastructure.Clients;
 using Microsoft.Extensions.Http.Resilience;
@@ -132,8 +133,7 @@ namespace AggregationService
         /// <returns></returns>
         public static IServiceCollection AddServices(this IServiceCollection services)
         {
-            services.AddScoped<ProductAggregationService>();
-
+            services.AddScoped<IProductAggregationService, ProductAggregationService>();
             return services;
         }
     }

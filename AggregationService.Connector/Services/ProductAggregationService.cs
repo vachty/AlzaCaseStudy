@@ -1,7 +1,6 @@
 ﻿using AggregationService.Application.Caching;
 using AggregationService.Application.Connector;
 using AggregationService.Application.Contracts;
-using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 
 namespace AggregationService.Application.Services
@@ -14,7 +13,7 @@ namespace AggregationService.Application.Services
             IPricingServiceClient pricingServiceClient,
             IStockServiceClient stockServiceClient,
             ILogger<ProductAggregationService> logger,
-            AggregatedProductMemoryCache memoryCache)
+            AggregatedProductMemoryCache memoryCache) : IProductAggregationService
     {
         /// <summary>
         /// Gets the aggregated product
