@@ -1,5 +1,4 @@
 ﻿using AggregationService.Application.Services;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace AggregationService.Controllers;
@@ -19,7 +18,6 @@ public class ProductsController : ControllerBase
     public async Task<IActionResult> GetById(string productId, CancellationToken cancellationToken)
     {
         var result = await _aggregationService.GetByIdAsync(productId, cancellationToken);
-
         if (result is null)
         {
             return NotFound(new { message = $"Product '{productId}' was not found." });

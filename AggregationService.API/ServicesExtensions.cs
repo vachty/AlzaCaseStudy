@@ -2,11 +2,14 @@
 using AggregationService.Application.Connector;
 using AggregationService.Application.Services;
 using AggregationService.Infrastructure.Clients;
+using Microsoft.Extensions.Http.Resilience;
 using Microsoft.Extensions.Options;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
+using Polly;
 using Serilog;
+using Serilog.Events;
 
 namespace AggregationService
 {
@@ -16,12 +19,23 @@ namespace AggregationService
         /// Adds the serilog
         /// </summary>
         /// <param name="builder"></param>
-        /// <param name="configuration"></param>
         /// <returns></returns>
-        public static WebApplicationBuilder AddSerilog(this WebApplicationBuilder builder)
+        public static WebApplicationBuilder AddSerilogLogging(this WebApplicationBuilder builder)
         {
-            builder.Host.UseSerilog((ctx, config) => 
-                config.ReadFrom.Configuration(ctx.Configuration));
+            builder.Host.UseSerilog((context, services, configuration) => configuration
+                .MinimumLevel.Information()
+                .MinimumLevel.Override("Microsoft", LogEventLevel.Warning)
+                .Enrich.FromLogContext()
+                .WriteTo.Console(
+                    outputTemplate:
+                    "[{Timestamp:HH:mm:ss} {Level:u3}] [CorrelationId: {CorrelationId}] {SourceContext} {Message:lj}{NewLine}{Exception}")
+                .WriteTo.File(
+                    path: "/app/logs/aggregation-service-.log",
+                    rollingInterval: RollingInterval.Day,
+                    retainedFileCountLimit: 7,
+                    shared: true,
+                    outputTemplate:
+                    "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] [CorrelationId: {CorrelationId}] {SourceContext} {Message:lj}{NewLine}{Exception}"));
 
             return builder;
         }
@@ -80,6 +94,25 @@ namespace AggregationService
             {
                 var options = sp.GetRequiredService<IOptions<ServicesOptions>>().Value;
                 client.BaseAddress = new Uri(options.PricingSimulationUrl);
+            })
+            .AddResilienceHandler("pricing-pipeline", pipeline =>
+            {
+                pipeline.AddTimeout(TimeSpan.FromSeconds(2));
+
+                pipeline.AddRetry(new HttpRetryStrategyOptions
+                {
+                    MaxRetryAttempts = 2,
+                    Delay = TimeSpan.FromMilliseconds(250),
+                    BackoffType = DelayBackoffType.Exponential
+                });
+
+                pipeline.AddCircuitBreaker(new HttpCircuitBreakerStrategyOptions
+                {
+                    SamplingDuration = TimeSpan.FromSeconds(10),
+                    FailureRatio = 0.5,
+                    MinimumThroughput = 5,
+                    BreakDuration = TimeSpan.FromSeconds(15)
+                });
             });
 
             // stock client

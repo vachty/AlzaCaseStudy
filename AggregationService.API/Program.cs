@@ -1,11 +1,13 @@
 using AggregationService;
+using AggregationService.API;
 using Scalar.AspNetCore;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
-builder.AddSerilog();
+builder.AddSerilogLogging();
 builder.Services.AddTelemetry();
 
 builder.Services.AddOptions();
@@ -22,6 +24,9 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
     app.MapScalarApiReference();
 }
+
+app.UseSerilogRequestLogging();
+app.UseCorrelationId();
 
 //app.UseHttpsRedirection();
 
