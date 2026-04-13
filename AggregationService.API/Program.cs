@@ -1,5 +1,6 @@
 using AggregationService;
 using AggregationService.API;
+using AggregationService.Application.Caching;
 using Scalar.AspNetCore;
 using Serilog;
 
@@ -12,6 +13,9 @@ builder.Services.AddTelemetry();
 
 builder.Services.AddOptions();
 builder.Services.AddServicesOptions(builder.Configuration);
+
+builder.Services.AddMemoryCache();
+builder.Services.AddSingleton<AggregatedProductMemoryCache>();
 
 builder.Services.AddClients();
 builder.Services.AddServices();

@@ -1,4 +1,5 @@
-﻿using AggregationService.Application.Connector;
+﻿using AggregationService.Application.Caching;
+using AggregationService.Application.Connector;
 using AggregationService.Application.Contracts;
 using Microsoft.Extensions.Logging;
 
@@ -7,77 +8,70 @@ namespace AggregationService.Application.Services
     /// <summary>
     /// The service for product aggregation
     /// </summary>
-    public class ProductAggregationService
-    {
-        private readonly IProductServiceClient _productServiceClient;
-        private readonly IPricingServiceClient _pricingServiceClient;
-        private readonly IStockServiceClient _stockServiceClient;
-        private readonly ILogger<ProductAggregationService> _logger;
-
-        public ProductAggregationService(
+    public class ProductAggregationService(
             IProductServiceClient productServiceClient,
             IPricingServiceClient pricingServiceClient,
             IStockServiceClient stockServiceClient,
-            ILogger<ProductAggregationService> logger)
-        {
-            _productServiceClient = productServiceClient;
-            _pricingServiceClient = pricingServiceClient;
-            _stockServiceClient = stockServiceClient;
-            _logger = logger;
-        }
-
+            ILogger<ProductAggregationService> logger,
+            AggregatedProductMemoryCache memoryCache)
+    {
         /// <summary>
         /// Gets the aggregated product
         /// </summary>
         /// <param name="productId"></param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        public async Task<AggregatedProductDto?> GetByIdAsync(string productId, CancellationToken cancellationToken = default)
+        public async Task<AggregatedProductDto?> GetByIdAsync(string productId, CancellationToken ct = default)
         {
-            var degraded = new List<string>();
+            return await memoryCache.GetOrCreateAsync(
+                productId,
+                async ct =>
+                {
+                    var degraded = new List<string>();
 
-            var productTask = SafeExecuteAsync(
-                () => _productServiceClient.GetProductAsync(productId, cancellationToken),
-                "ProductService",
-                degraded);
+                    var productTask = SafeExecuteAsync(
+                        () => productServiceClient.GetProductAsync(productId, ct),
+                        "ProductService",
+                        degraded);
 
-            var pricingTask = SafeExecuteAsync(
-                () => _pricingServiceClient.GetPriceAsync(productId, cancellationToken),
-                "PricingService",
-                degraded);
+                    var pricingTask = SafeExecuteAsync(
+                        () => pricingServiceClient.GetPriceAsync(productId, ct),
+                        "PricingService",
+                        degraded);
 
-            var stockTask = SafeExecuteAsync(
-                () => _stockServiceClient.GetStockAsync(productId, cancellationToken),
-                "StockService",
-                degraded);
+                    var stockTask = SafeExecuteAsync(
+                        () => stockServiceClient.GetStockAsync(productId, ct),
+                        "StockService",
+                        degraded);
 
-            await Task.WhenAll(productTask, pricingTask, stockTask);
+                    await Task.WhenAll(productTask, pricingTask, stockTask);
 
-            var product = await productTask;
-            var price = await pricingTask;
-            var stock = await stockTask;
+                    var product = await productTask;
+                    var price = await pricingTask;
+                    var stock = await stockTask;
 
-            // product is the most important, if its null then skip the rest
-            if (product is null)
-            {
-                _logger.LogWarning(
-                    "Unable to aggregate product {ProductId} because product data is missing.",
-                    productId);
+                    if (product is null)
+                    {
+                        logger.LogWarning(
+                            "Unable to aggregate product {ProductId} because product data is missing.",
+                            productId);
 
-                return null;
-            }
+                        return null;
+                    }
 
-            return new AggregatedProductDto
-            {
-                ProductId = product.Id,
-                Name = product.Name,
-                ImageUrl = product.ImageUrl,
-                Price = price?.Amount,
-                Currency = price?.Currency,
-                IsAvailable = stock?.InStock ?? false,
-                StockQuantity = stock?.Quantity,
-                Degraded = degraded
-            };
+                    return new AggregatedProductDto
+                    {
+                        ProductId = product.Id,
+                        Name = product.Name,
+                        ImageUrl = product.ImageUrl,
+                        Price = price?.Amount,
+                        Currency = price?.Currency,
+                        IsAvailable = stock?.InStock ?? false,
+                        StockQuantity = stock?.Quantity,
+                        Degraded = degraded
+                    };
+                },
+                ct);
         }
 
         /// <summary>
@@ -99,7 +93,7 @@ namespace AggregationService.Application.Services
             }
             catch (Exception ex)
             {
-                _logger.LogWarning(
+                logger.LogWarning(
                     ex,
                     "Dependency {DependencyName} failed. Falling back to partial response.",
                     dependencyName);
