@@ -1,4 +1,12 @@
 <Solution>
+  <Project Path="AggregationService.API/AggregationService.API.csproj" />
+  <Project Path="AggregationService.Connector/AggregationService.Application.csproj" Id="06caec6e-0437-43fe-921b-6ff0606c90c2" />
   <Project Path="AggregationService.Domain/AggregationService.Domain.csproj" Id="9a6e06d5-e7ef-4f21-a397-d7a2eb77267e" />
-  <Project Path="AggregationService/AggregationService.API.csproj" />
+  <Project Path="AggregationService.Infrastructure/AggregationService.Infrastructure.csproj" Id="907f9006-1fea-406e-ae9e-2bdd8fe4629d" />
+  <Project Path="docker-compose.dcproj">
+    <Build />
+  </Project>
+  <Project Path="PricingSimulation.API/PricingSimulation.API.csproj" Id="f3845390-1405-4aef-88fc-c7beec0b6863" />
+  <Project Path="ProductSimulation.API/ProductSimulation.API.csproj" Id="58ef116e-3e4b-4845-9f9a-f75582804bdb" />
+  <Project Path="StockSimulation.API/StockSimulation.API.csproj" Id="fbefb3ab-0b21-4f3e-8430-0da9acc2a6e7" />
 </Solution>

@@ -8,6 +8,12 @@ builder.Services.AddOpenApi();
 builder.AddSerilog();
 builder.Services.AddTelemetry();
 
+builder.Services.AddOptions();
+builder.Services.AddServicesOptions(builder.Configuration);
+
+builder.Services.AddClients();
+builder.Services.AddServices();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -17,7 +23,7 @@ if (app.Environment.IsDevelopment())
     app.MapScalarApiReference();
 }
 
-app.UseHttpsRedirection();
+//app.UseHttpsRedirection();
 
 app.UseAuthorization();
 

@@ -1,8 +1,12 @@
-﻿using Serilog;
-using OpenTelemetry;
-using OpenTelemetry.Trace;
+﻿using AggregationService.API.Configuration;
+using AggregationService.Application.Connector;
+using AggregationService.Application.Services;
+using AggregationService.Infrastructure.Clients;
+using Microsoft.Extensions.Options;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
+using Serilog;
 
 namespace AggregationService
 {
@@ -16,15 +20,8 @@ namespace AggregationService
         /// <returns></returns>
         public static WebApplicationBuilder AddSerilog(this WebApplicationBuilder builder)
         {
-            Log.Logger = new LoggerConfiguration()
-                .WriteTo.Console()
-                .WriteTo.File("logs/log.txt", rollingInterval: RollingInterval.Day)
-                .CreateLogger();
-
-            builder.Host.UseSerilog((ctx, config) => config
-                .ReadFrom.Configuration(ctx.Configuration)
-                .Enrich.FromLogContext()
-                .WriteTo.Console());
+            builder.Host.UseSerilog((ctx, config) => 
+                config.ReadFrom.Configuration(ctx.Configuration));
 
             return builder;
         }
@@ -48,6 +45,61 @@ namespace AggregationService
                 .AddAspNetCoreInstrumentation()
                 .AddHttpClientInstrumentation()
                 .AddConsoleExporter());
+
+            return services;
+        }
+
+        /// <summary>
+        /// Adds the options
+        /// </summary>
+        /// <param name="services"></param>
+        /// <param name="configuration"></param>
+        /// <returns></returns>
+        public static IServiceCollection AddServicesOptions(this IServiceCollection services, IConfiguration configuration)
+        {
+            services.Configure<ServicesOptions>(configuration.GetSection(ServicesOptions.SectionName));
+            return services;
+        }
+
+        /// <summary>
+        /// Adds the HTTP clients for the downstream services (product, pricing, stock)
+        /// </summary>
+        /// <param name="services"></param>
+        /// <returns></returns>
+        public static IServiceCollection AddClients(this IServiceCollection services) 
+        {
+            // product client
+            services.AddHttpClient<IProductServiceClient, ProductServiceClient>((sp, client) =>
+            {
+                var options = sp.GetRequiredService<IOptions<ServicesOptions>>().Value;
+                client.BaseAddress = new Uri(options.ProductSimulationUrl);
+            });
+
+            // pricing client
+            services.AddHttpClient<IPricingServiceClient, PricingServiceClient>((sp, client) =>
+            {
+                var options = sp.GetRequiredService<IOptions<ServicesOptions>>().Value;
+                client.BaseAddress = new Uri(options.PricingSimulationUrl);
+            });
+
+            // stock client
+            services.AddHttpClient<IStockServiceClient, StockServiceClient>((sp, client) =>
+            {
+                var options = sp.GetRequiredService<IOptions<ServicesOptions>>().Value;
+                client.BaseAddress = new Uri(options.StockSimulationUrl);
+            });
+
+            return services;
+        }
+
+        /// <summary>
+        /// Adds the services
+        /// </summary>
+        /// <param name="services"></param>
+        /// <returns></returns>
+        public static IServiceCollection AddServices(this IServiceCollection services)
+        {
+            services.AddScoped<ProductAggregationService>();
 
             return services;
         }

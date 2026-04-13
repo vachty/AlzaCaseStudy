@@ -1,0 +1,51 @@
+services:
+  aggregationservice.api:
+    image: ${DOCKER_REGISTRY-}aggregationserviceapi
+    build:
+      context: .
+      dockerfile: AggregationService.API/Dockerfile
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_HTTP_PORTS=80
+      - ServicesOptions__ProductSimulationUrl=http://productsimulation.api:80
+      - ServicesOptions__PricingSimulationUrl=http://pricingsimulation.api:80
+      - ServicesOptions__StockSimulationUrl=http://stocksimulation.api:80
+    ports:
+      - "5001:80"
+    depends_on:
+      - productsimulation.api
+      - pricingsimulation.api
+      - stocksimulation.api
+
+  productsimulation.api:
+    image: ${DOCKER_REGISTRY-}productsimulationapi
+    build:
+      context: .
+      dockerfile: ProductSimulation.API/Dockerfile
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_HTTP_PORTS=80
+    ports:
+      - "5003:80"
+
+  pricingsimulation.api:
+    image: ${DOCKER_REGISTRY-}pricingsimulationapi
+    build:
+      context: .
+      dockerfile: PricingSimulation.API/Dockerfile
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_HTTP_PORTS=80
+    ports:
+      - "5005:80"
+
+  stocksimulation.api:
+    image: ${DOCKER_REGISTRY-}stocksimulationapi
+    build:
+      context: .
+      dockerfile: StockSimulation.API/Dockerfile
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_HTTP_PORTS=80
+    ports:
+      - "5007:80"
