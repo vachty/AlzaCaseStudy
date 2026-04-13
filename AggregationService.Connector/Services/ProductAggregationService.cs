@@ -1,6 +1,7 @@
 ﻿using AggregationService.Application.Caching;
 using AggregationService.Application.Connector;
 using AggregationService.Application.Contracts;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 
 namespace AggregationService.Application.Services
@@ -21,7 +22,7 @@ namespace AggregationService.Application.Services
         /// <param name="productId"></param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        public async Task<AggregatedProductDto?> GetByIdAsync(string productId, CancellationToken ct = default)
+        public async Task<AggregatedProductDto?> GetByIdAsync(string productId, CancellationToken cancellationToken = default)
         {
             return await memoryCache.GetOrCreateAsync(
                 productId,
@@ -71,7 +72,7 @@ namespace AggregationService.Application.Services
                         Degraded = degraded
                     };
                 },
-                ct);
+                cancellationToken);
         }
 
         /// <summary>
