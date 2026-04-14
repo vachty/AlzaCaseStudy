@@ -8,24 +8,24 @@ namespace AggregationService.IntegrationTests;
 
 public sealed class IntegrationTestFixture : IAsyncLifetime
 {
-    private readonly IFutureDockerImage _productImage;
-    private readonly IFutureDockerImage _pricingImage;
-    private readonly IFutureDockerImage _stockImage;
+    private readonly IFutureDockerImage productImage;
+    private readonly IFutureDockerImage pricingImage;
+    private readonly IFutureDockerImage stockImage;
 
-    private readonly IContainer _productContainer;
-    private readonly IContainer _pricingContainer;
-    private readonly IContainer _stockContainer;
-    private readonly IContainer _rabbitMqContainer;
+    private readonly IContainer productContainer;
+    private readonly IContainer pricingContainer;
+    private readonly IContainer stockContainer;
+    private readonly IContainer rabbitMqContainer;
 
     public CustomWebApplicationFactory Factory { get; private set; } = default!;
     public HttpClient Client { get; private set; } = default!;
 
-    public string ProductServiceUrl => $"http://localhost:{_productContainer.GetMappedPublicPort(8080)}";
-    public string PricingServiceUrl => $"http://localhost:{_pricingContainer.GetMappedPublicPort(8080)}";
-    public string StockServiceUrl => $"http://localhost:{_stockContainer.GetMappedPublicPort(8080)}";
+    public string ProductServiceUrl => $"http://localhost:{productContainer.GetMappedPublicPort(8080)}";
+    public string PricingServiceUrl => $"http://localhost:{pricingContainer.GetMappedPublicPort(8080)}";
+    public string StockServiceUrl => $"http://localhost:{stockContainer.GetMappedPublicPort(8080)}";
 
     public string RabbitMqHost => "localhost";
-    public ushort RabbitMqPort => (ushort)_rabbitMqContainer.GetMappedPublicPort(5672);
+    public ushort RabbitMqPort => (ushort)rabbitMqContainer.GetMappedPublicPort(5672);
 
     /// <summary>
     /// .ctor
@@ -34,25 +34,25 @@ public sealed class IntegrationTestFixture : IAsyncLifetime
     {
         var solutionDirectory = CommonDirectoryPath.GetSolutionDirectory();
 
-        _productImage = new ImageFromDockerfileBuilder()
+        productImage = new ImageFromDockerfileBuilder()
             .WithName("productsimulationapi:test")
             .WithDockerfile("ProductSimulation.API/Dockerfile")
             .WithDockerfileDirectory(solutionDirectory, ".")
             .Build();
 
-        _pricingImage = new ImageFromDockerfileBuilder()
+        pricingImage = new ImageFromDockerfileBuilder()
             .WithName("pricingsimulationapi:test")
             .WithDockerfile("PricingSimulation.API/Dockerfile")
             .WithDockerfileDirectory(solutionDirectory, ".")
             .Build();
 
-        _stockImage = new ImageFromDockerfileBuilder()
+        stockImage = new ImageFromDockerfileBuilder()
             .WithName("stocksimulationapi:test")
             .WithDockerfile("StockSimulation.API/Dockerfile")
             .WithDockerfileDirectory(solutionDirectory, ".")
             .Build();
 
-        _rabbitMqContainer = new RabbitMqBuilder("rabbitmq:3-management")
+        rabbitMqContainer = new RabbitMqBuilder("rabbitmq:3-management")
             .WithPortBinding(5672, true)
             .WithPortBinding(15672, true)
             .WithEnvironment("RABBITMQ_DEFAULT_USER", "guest")
@@ -60,36 +60,36 @@ public sealed class IntegrationTestFixture : IAsyncLifetime
             .WithWaitStrategy(Wait.ForUnixContainer().UntilExternalTcpPortIsAvailable(5672))
             .Build();
 
-        _productContainer = new ContainerBuilder(_productImage)
+        productContainer = new ContainerBuilder(productImage)
             .WithPortBinding(8080, true)
             .WithWaitStrategy(Wait.ForUnixContainer().UntilExternalTcpPortIsAvailable(8080))
-            .DependsOn(_rabbitMqContainer)
+            .DependsOn(rabbitMqContainer)
             .Build();
 
-        _pricingContainer = new ContainerBuilder(_pricingImage)
+        pricingContainer = new ContainerBuilder(pricingImage)
             .WithPortBinding(8080, true)
             .WithWaitStrategy(Wait.ForUnixContainer().UntilExternalTcpPortIsAvailable(8080))
-            .DependsOn(_rabbitMqContainer)
+            .DependsOn(rabbitMqContainer)
             .Build();
 
-        _stockContainer = new ContainerBuilder(_stockImage)
+        stockContainer = new ContainerBuilder(stockImage)
             .WithPortBinding(8080, true)
             .WithWaitStrategy(Wait.ForUnixContainer().UntilExternalTcpPortIsAvailable(8080))
-            .DependsOn(_rabbitMqContainer)
+            .DependsOn(rabbitMqContainer)
             .Build();
     }
 
     /// <inheritdoc/>
     public async Task InitializeAsync()
     {
-        await _productImage.CreateAsync();
-        await _pricingImage.CreateAsync();
-        await _stockImage.CreateAsync();
+        await productImage.CreateAsync();
+        await pricingImage.CreateAsync();
+        await stockImage.CreateAsync();
 
-        await _rabbitMqContainer.StartAsync();
-        await _productContainer.StartAsync();
-        await _pricingContainer.StartAsync();
-        await _stockContainer.StartAsync();
+        await rabbitMqContainer.StartAsync();
+        await productContainer.StartAsync();
+        await pricingContainer.StartAsync();
+        await stockContainer.StartAsync();
 
         Factory = new CustomWebApplicationFactory(
             ProductServiceUrl,
@@ -106,9 +106,9 @@ public sealed class IntegrationTestFixture : IAsyncLifetime
     {
         Factory.Dispose();
 
-        await _productContainer.DisposeAsync();
-        await _pricingContainer.DisposeAsync();
-        await _stockContainer.DisposeAsync();
-        await _rabbitMqContainer.DisposeAsync();
+        await productContainer.DisposeAsync();
+        await pricingContainer.DisposeAsync();
+        await stockContainer.DisposeAsync();
+        await rabbitMqContainer.DisposeAsync();
     }
 }

@@ -12,7 +12,7 @@ public class AggregatedProductMemoryCache(
     private const int SuccessCacheDurationSeconds = 30;
     private const int DegradedCacheDurationSeconds = 10;
 
-    private readonly ConcurrentDictionary<string, SemaphoreSlim> _locks = new();
+    private readonly ConcurrentDictionary<string, SemaphoreSlim> locks = new();
 
     /// <summary>
     /// Gets or creates an aggregated product in the cache
@@ -36,7 +36,7 @@ public class AggregatedProductMemoryCache(
 
         logger.LogInformation("Cache miss for product {ProductId}", productId);
 
-        var semaphore = _locks.GetOrAdd(cacheKey, _ => new SemaphoreSlim(1, 1));
+        var semaphore = locks.GetOrAdd(cacheKey, _ => new SemaphoreSlim(1, 1));
         await semaphore.WaitAsync(cancellationToken);
         try
         {
@@ -84,7 +84,7 @@ public class AggregatedProductMemoryCache(
 
             if (semaphore.CurrentCount == 1)
             {
-                _locks.TryRemove(cacheKey, out _);
+                locks.TryRemove(cacheKey, out _);
             }
         }
     }

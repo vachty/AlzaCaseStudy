@@ -5,25 +5,9 @@ namespace AggregationService.API.Middleware;
 /// <summary>
 /// The middleware for handling the correlation ID
 /// </summary>
-public class CorrelationIdMiddleware
+public class CorrelationIdMiddleware(RequestDelegate next, ILogger<CorrelationIdMiddleware> logger)
 {
     public const string HeaderName = "X-Correlation-ID";
-
-    private readonly RequestDelegate _next;
-    private readonly ILogger<CorrelationIdMiddleware> _logger;
-
-    /// <summary>
-    /// .ctor
-    /// </summary>
-    /// <param name="next"></param>
-    /// <param name="logger"></param>
-    public CorrelationIdMiddleware(
-        RequestDelegate next,
-        ILogger<CorrelationIdMiddleware> logger)
-    {
-        _next = next;
-        _logger = logger;
-    }
 
     /// <summary>
     /// Invoke
@@ -38,19 +22,19 @@ public class CorrelationIdMiddleware
         context.Response.Headers[HeaderName] = correlationId;
 
         using (LogContext.PushProperty("CorrelationId", correlationId))
-        using (_logger.BeginScope(new Dictionary<string, object>
+        using (logger.BeginScope(new Dictionary<string, object>
         {
             ["CorrelationId"] = correlationId
         }))
         {
-            _logger.LogInformation(
+            logger.LogInformation(
                 "Handling request {Method} {Path}",
                 context.Request.Method,
                 context.Request.Path);
 
-            await _next(context);
+            await next(context);
 
-            _logger.LogInformation(
+            logger.LogInformation(
                 "Finished request {Method} {Path} with status code {StatusCode}",
                 context.Request.Method,
                 context.Request.Path,
