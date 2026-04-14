@@ -1,6 +1,8 @@
 ﻿using AggregationService.Application.Caching;
 using AggregationService.Application.Connector;
 using AggregationService.Application.Contracts;
+using AggregationService.Application.Events;
+using AggregationService.Application.Publishers;
 using Microsoft.Extensions.Logging;
 
 namespace AggregationService.Application.Services;
@@ -13,7 +15,8 @@ public class ProductAggregationService(
         IPricingServiceClient pricingServiceClient,
         IStockServiceClient stockServiceClient,
         ILogger<ProductAggregationService> logger,
-        AggregatedProductMemoryCache memoryCache) : IProductAggregationService
+        AggregatedProductMemoryCache memoryCache,
+        IProductAggregationEventPublisher eventPublisher) : IProductAggregationService
 {
     /// <summary>
     /// Gets the aggregated product
@@ -23,7 +26,7 @@ public class ProductAggregationService(
     /// <returns></returns>
     public async Task<AggregatedProductDto?> GetByIdAsync(string productId, CancellationToken cancellationToken = default)
     {
-        return await memoryCache.GetOrCreateAsync(
+        var aggregatedProduct = await memoryCache.GetOrCreateAsync(
             productId,
             async ct =>
             {
@@ -72,6 +75,23 @@ public class ProductAggregationService(
                 };
             },
             cancellationToken);
+
+        if (aggregatedProduct is null)
+        {
+            return null;
+        }
+
+        await eventPublisher.PublishAsync(
+            new ProductAggregatedEvent
+            {
+                ProductId = aggregatedProduct.ProductId,
+                OccurredAtUtc = DateTime.UtcNow,
+                IsDegraded = aggregatedProduct.Degraded.Count > 0,
+                DegradedServices = aggregatedProduct.Degraded
+            },
+            cancellationToken);
+
+        return aggregatedProduct;
     }
 
     /// <summary>

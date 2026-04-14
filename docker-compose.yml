@@ -10,12 +10,19 @@ services:
       - ServicesOptions__ProductSimulationUrl=http://productsimulation.api:80
       - ServicesOptions__PricingSimulationUrl=http://pricingsimulation.api:80
       - ServicesOptions__StockSimulationUrl=http://stocksimulation.api:80
+      - MessagingOptions__HostName=rabbitmq
+      - MessagingOptions__Port=5672
+      - MessagingOptions__UserName=guest
+      - MessagingOptions__Password=guest
+      - MessagingOptions__ExchangeName=product-events
+      - MessagingOptions__RoutingKey=product.aggregated
     ports:
       - "5001:80"
     depends_on:
       - productsimulation.api
       - pricingsimulation.api
       - stocksimulation.api
+      - rabbitmq
 
   productsimulation.api:
     image: ${DOCKER_REGISTRY-}productsimulationapi
@@ -49,3 +56,12 @@ services:
       - ASPNETCORE_HTTP_PORTS=80
     ports:
       - "5007:80"
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    environment:
+      - RABBITMQ_DEFAULT_USER=guest
+      - RABBITMQ_DEFAULT_PASS=guest
+    ports:
+      - "5672:5672"
+      - "15672:15672"

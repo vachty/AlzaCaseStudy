@@ -1,4 +1,8 @@
 <Solution>
+  <Folder Name="/SolutionItems/">
+    <File Path="Auth.md" />
+  </Folder>
+  <Project Path="../AggregationService.Tests/AggregationService.Tests.csproj" Id="d652987a-cac4-422e-8ccb-7d185bab5c74" />
   <Project Path="AggregationService.API/AggregationService.API.csproj" />
   <Project Path="AggregationService.Connector/AggregationService.Application.csproj" Id="06caec6e-0437-43fe-921b-6ff0606c90c2" />
   <Project Path="AggregationService.Domain/AggregationService.Domain.csproj" Id="9a6e06d5-e7ef-4f21-a397-d7a2eb77267e" />

@@ -1,8 +1,11 @@
 ﻿using AggregationService.API.Configuration;
+using AggregationService.Application.Configuration;
 using AggregationService.Application.Connector;
 using AggregationService.Application.Contracts;
+using AggregationService.Application.Publishers;
 using AggregationService.Application.Services;
 using AggregationService.Infrastructure.Clients;
+using AggregationService.Infrastructure.Messaging.RabbitMq.Publishers;
 using Microsoft.Extensions.Http.Resilience;
 using Microsoft.Extensions.Options;
 using OpenTelemetry.Metrics;
@@ -73,6 +76,8 @@ public static class ServicesExtensions
     public static IServiceCollection AddServicesOptions(this IServiceCollection services, IConfiguration configuration)
     {
         services.Configure<ServicesOptions>(configuration.GetSection(ServicesOptions.SectionName));
+        services.Configure<MessagingOptions>(configuration.GetSection(MessagingOptions.SectionName));
+
         return services;
     }
 
@@ -133,6 +138,10 @@ public static class ServicesExtensions
     /// <returns></returns>
     public static IServiceCollection AddServices(this IServiceCollection services)
     {
+        //publishers
+        services.AddSingleton<IProductAggregationEventPublisher, RabbitMqProductAggregationEventPublisher>();
+
+        //services
         services.AddScoped<IProductAggregationService, ProductAggregationService>();
         return services;
     }
