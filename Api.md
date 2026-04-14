@@ -33,9 +33,9 @@ Returns an aggregated product view for the specified product ID.
 - method: `GET`
 - path parameter: `productId`
 - request body: none
-- optional header: `X-Correlation-Id`
+- optional header: `X-Correlation-ID`
 
-If the client provides `X-Correlation-Id`, the API uses it for request tracing and structured logging.  
+If the client provides `X-Correlation-ID`, the API uses it for request tracing and structured logging.  
 If the header is not provided, the service generates a correlation identifier automatically.
 
 Example:
@@ -68,7 +68,7 @@ X-Correlation-Id: 7d1d6d65-6b15-4f22-8f77-6c1b71d7d101
 ```
 
 ##### Response headers
-- X-Correlation-Id: correlation identifier associated with the request
+- X-Correlation-ID: correlation identifier associated with the request
 
 #### Not found response
 - status: 404 Not Found
