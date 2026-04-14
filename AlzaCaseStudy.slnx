@@ -1,6 +1,7 @@
 <Solution>
   <Folder Name="/SolutionItems/">
     <File Path="Auth.md" />
+    <File Path="FailureScenarios.md" />
     <File Path="SolutionPathHelper.cs" />
     <File Path="TestContainers.md" />
   </Folder>
