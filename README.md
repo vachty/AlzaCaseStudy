@@ -1,5 +1,44 @@
 # AlzaCaseStudy
 
+## Prerequisites
+
+To run the solution locally, make sure you have the following installed:
+
+- [.NET SDK 10.0](https://dotnet.microsoft.com/)
+- [Docker](https://www.docker.com/)
+- Docker Compose support (`docker compose`)
+- Git
+
+It is recommended to run the project from the repository root.
+
+## How to run
+
+1. Clone the repository
+2. In solution root folder, where docker compose file is located:
+	- docker compose up --build 
+
+This command starts:
+
+- aggregationservice.api
+- productsimulation.api
+- pricingsimulation.api
+- stocksimulation.api
+- rabbitmq
+
+3. Access the services
+After startup, the following endpoints are available:
+
+- Aggregation API: `http://localhost:5001`
+- Product Simulation API: `http://localhost:5003`
+- Pricing Simulation API: `http://localhost:5005`
+- Stock Simulation API: `http://localhost:5007`
+- RabbitMQ Management UI: `http://localhost:15672`
+- RabbitMQ credentials:
+
+  - username: `guest`
+  - password: `guest`
+
+
 ## Overview
 
 This repository contains a small cloud-oriented product aggregation solution built in .NET.
