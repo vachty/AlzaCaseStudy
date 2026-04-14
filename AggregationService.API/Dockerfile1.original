@@ -12,19 +12,22 @@ EXPOSE 8081
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
-COPY ["AggregationService/AggregationService.csproj", "AggregationService/"]
-RUN dotnet restore "./AggregationService/AggregationService.csproj"
+COPY ["AggregationService.API/AggregationService.API.csproj", "AggregationService.API/"]
+COPY ["AggregationService.Infrastructure/AggregationService.Infrastructure.csproj", "AggregationService.Infrastructure/"]
+COPY ["AggregationService.Connector/AggregationService.Application.csproj", "AggregationService.Connector/"]
+COPY ["AggregationService.Domain/AggregationService.Domain.csproj", "AggregationService.Domain/"]
+RUN dotnet restore "./AggregationService.API/AggregationService.API.csproj"
 COPY . .
-WORKDIR "/src/AggregationService"
-RUN dotnet build "./AggregationService.csproj" -c $BUILD_CONFIGURATION -o /app/build
+WORKDIR "/src/AggregationService.API"
+RUN dotnet build "./AggregationService.API.csproj" -c $BUILD_CONFIGURATION -o /app/build
 
 # Tato fáze slouží k publikování projektu služby, který se má zkopírovat do konečné fáze.
 FROM build AS publish
 ARG BUILD_CONFIGURATION=Release
-RUN dotnet publish "./AggregationService.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
+RUN dotnet publish "./AggregationService.API.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
 
 # Tato fáze se používá v produkčním prostředí nebo při spuštění z VS v běžném režimu (výchozí, když se nepoužívá konfigurace ladění).
 FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
-ENTRYPOINT ["dotnet", "AggregationService.dll"]
+ENTRYPOINT ["dotnet", "AggregationService.API.dll"]

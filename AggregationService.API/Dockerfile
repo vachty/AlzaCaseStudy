@@ -14,7 +14,7 @@ ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
 COPY ["AggregationService.API/AggregationService.API.csproj", "AggregationService.API/"]
 COPY ["AggregationService.Infrastructure/AggregationService.Infrastructure.csproj", "AggregationService.Infrastructure/"]
-COPY ["AggregationService.Connector/AggregationService.Application.csproj", "AggregationService.Connector/"]
+COPY ["AggregationService.Application/AggregationService.Application.csproj", "AggregationService.Application/"]
 COPY ["AggregationService.Domain/AggregationService.Domain.csproj", "AggregationService.Domain/"]
 RUN dotnet restore "./AggregationService.API/AggregationService.API.csproj"
 COPY . .
