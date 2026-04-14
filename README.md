@@ -1,5 +1,7 @@
 # AlzaCaseStudy
 
+## How to run
+
 ## Prerequisites
 
 To run the solution locally, make sure you have the following installed:
@@ -11,32 +13,52 @@ To run the solution locally, make sure you have the following installed:
 
 It is recommended to run the project from the repository root.
 
-## How to run
 
-1. Clone the repository
-2. In solution root folder, where docker compose file is located:
-	- docker compose up --build 
+### Run the whole solution with Docker Compose
 
-This command starts:
+From the repository root:
 
-- aggregationservice.api
-- productsimulation.api
-- pricingsimulation.api
-- stocksimulation.api
-- rabbitmq
+```bash
+docker compose up --build
+```
 
-3. Access the services
-After startup, the following endpoints are available:
+This starts:
 
-- Aggregation API: `http://localhost:5001`
-- Product Simulation API: `http://localhost:5003`
-- Pricing Simulation API: `http://localhost:5005`
-- Stock Simulation API: `http://localhost:5007`
-- RabbitMQ Management UI: `http://localhost:15672`
-- RabbitMQ credentials:
+- `aggregationservice.api`
+- `productsimulation.api`
+- `pricingsimulation.api`
+- `stocksimulation.api`
+- `rabbitmq`
 
-  - username: `guest`
-  - password: `guest`
+### Open the API
+
+After startup, open:
+
+```text
+http://localhost:5001
+```
+
+If running in development mode, OpenAPI/Scalar endpoints are also exposed by the API. The application configures OpenAPI and Scalar in development through the ASP.NET Core startup pipeline.
+```text
+http://localhost:5001/scalar/
+```
+
+
+### RabbitMQ management UI
+
+Open:
+
+```text
+http://localhost:15672
+```
+
+Credentials:
+
+```text
+guest / guest
+```
+
+---
 
 
 ## Overview
@@ -164,62 +186,6 @@ Default RabbitMQ credentials in local development:
 
 - username: `guest`
 - password: `guest`
-
----
-
-## How to run
-
-### Prerequisites
-
-You need:
-
-- .NET SDK
-- Docker
-- Docker Compose / Docker Desktop
-
-### Run the whole solution with Docker Compose
-
-From the repository root:
-
-```bash
-docker compose up --build
-```
-
-This starts:
-
-- `aggregationservice.api`
-- `productsimulation.api`
-- `pricingsimulation.api`
-- `stocksimulation.api`
-- `rabbitmq`
-
-### Open the API
-
-After startup, open:
-
-```text
-http://localhost:5001
-```
-
-If running in development mode, OpenAPI/Scalar endpoints are also exposed by the API. The application configures OpenAPI and Scalar in development through the ASP.NET Core startup pipeline.
-```text
-http://localhost:5001/scalar/
-```
-
-
-### RabbitMQ management UI
-
-Open:
-
-```text
-http://localhost:15672
-```
-
-Credentials:
-
-```text
-guest / guest
-```
 
 ---
 
