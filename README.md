@@ -430,3 +430,10 @@ This project demonstrates a practical .NET aggregation service with:
 - integration testing with realistic infrastructure
 
 The solution is intentionally scoped to stay implementable while still showing clear paths toward a more complete cloud-native architecture.
+
+## Additional documentation
+
+- `Api.md` - API endpoint overview
+- `FailureScenarios.md` - failure cases and handling strategy
+- `TestContainers.md` - integration test infrastructure notes
+- `Auth.md` - authentication/authorization design note
