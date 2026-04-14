@@ -12,7 +12,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\AggregationService.Connector\AggregationService.Application.csproj" />
+    <ProjectReference Include="..\AggregationService.Application\AggregationService.Application.csproj" />
     <ProjectReference Include="..\AggregationService.Domain\AggregationService.Domain.csproj" />
   </ItemGroup>
 
