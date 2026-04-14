@@ -12,68 +12,67 @@ namespace AggregationService.Infrastructure.Messaging.RabbitMq.Publishers;
 /// <summary>
 /// The publisher for product aggregation events using RabbitMQ
 /// </summary>
-public sealed class RabbitMqProductAggregationEventPublisher : IProductAggregationEventPublisher, IDisposable
+public sealed class RabbitMqProductAggregationEventPublisher(ILogger<RabbitMqProductAggregationEventPublisher> logger, IOptions<MessagingOptions> options) : IProductAggregationEventPublisher, IDisposable
 {
-    private readonly ILogger<RabbitMqProductAggregationEventPublisher> _logger;
-    private readonly MessagingOptions _options;
-    private readonly IConnection _connection;
-    private readonly IChannel _channel;
-
-    /// <summary>
-    /// .ctor
-    /// </summary>
-    /// <param name="options"></param>
-    /// <param name="logger"></param>
-    public RabbitMqProductAggregationEventPublisher(
-        IOptions<MessagingOptions> options,
-        ILogger<RabbitMqProductAggregationEventPublisher> logger)
-    {
-        _logger = logger;
-        _options = options.Value;
-
-        var factory = new ConnectionFactory
-        {
-            HostName = _options.HostName,
-            Port = _options.Port,
-            UserName = _options.UserName,
-            Password = _options.Password
-        };
-
-        _connection = factory.CreateConnectionAsync().GetAwaiter().GetResult();
-        _channel = _connection.CreateChannelAsync().GetAwaiter().GetResult();
-
-        _channel.ExchangeDeclareAsync(
-            exchange: _options.ExchangeName,
-            type: ExchangeType.Topic,
-            durable: true,
-            autoDelete: false,
-            cancellationToken: CancellationToken.None).GetAwaiter().GetResult();
-    }
+    public IConnection? Connection { get; private set; } 
+    public IChannel? Channel { get; private set; }
 
     /// <inheritdoc/>
-    public async Task PublishAsync(ProductAggregatedEvent productAggregatedEvent, CancellationToken ct = default)
+    public async Task PublishAsync(ProductAggregatedEvent evt, CancellationToken ct = default)
     {
-        var body = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(productAggregatedEvent));
+        Exception? lastException = null;
 
-        var properties = new BasicProperties
+        for (var attempt = 1; attempt <= 5; attempt++)
         {
-            Persistent = true,
-            ContentType = "application/json"
-        };
+            try
+            {
+                var factory = new ConnectionFactory
+                {
+                    HostName = options.Value.HostName,
+                    Port = options.Value.Port,
+                    UserName = options.Value.UserName,
+                    Password = options.Value.Password,
+                    RequestedConnectionTimeout = TimeSpan.FromSeconds(5),
+                    SocketReadTimeout = TimeSpan.FromSeconds(5),
+                    SocketWriteTimeout = TimeSpan.FromSeconds(5)
+                };
 
-        await _channel.BasicPublishAsync(
-            exchange: _options.ExchangeName,
-            routingKey: _options.RoutingKey,
-            mandatory: false,
-            basicProperties: properties,
-            body: body,
-            cancellationToken: ct);
+                await using var connection = await factory.CreateConnectionAsync(ct);
+                await using var channel = await connection.CreateChannelAsync(cancellationToken: ct);
 
-        _logger.LogInformation(
-            "Published product aggregated event for product {ProductId} to exchange {ExchangeName} with routing key {RoutingKey}",
-            productAggregatedEvent.ProductId,
-            _options.ExchangeName,
-            _options.RoutingKey);
+                await channel.ExchangeDeclareAsync(
+                    exchange: options.Value.ExchangeName,
+                    type: ExchangeType.Topic,
+                    durable: true,
+                    autoDelete: false,
+                    cancellationToken: ct);
+
+                var body = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(evt));
+
+                var properties = new BasicProperties
+                {
+                    Persistent = true,
+                    ContentType = "application/json"
+                };
+
+                await channel.BasicPublishAsync(
+                    exchange: options.Value.ExchangeName,
+                    routingKey: options.Value.RoutingKey,
+                    mandatory: false,
+                    basicProperties: properties,
+                    body: body,
+                    cancellationToken: ct);
+
+                return;
+            }
+            catch (Exception ex) when (attempt < 5)
+            {
+                lastException = ex;
+                await Task.Delay(500, ct);
+            }
+        }
+
+        throw lastException!;
     }
 
     /// <summary>
@@ -81,7 +80,7 @@ public sealed class RabbitMqProductAggregationEventPublisher : IProductAggregati
     /// </summary>
     public void Dispose()
     {
-        _channel.Dispose();
-        _connection.Dispose();
+        Channel?.Dispose();
+        Connection?.Dispose();
     }
 }

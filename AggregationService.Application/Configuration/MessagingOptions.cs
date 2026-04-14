@@ -5,7 +5,7 @@
 /// </summary>
 public class MessagingOptions
 {
-    public const string SectionName = "RabbitMq";
+    public const string SectionName = nameof(MessagingOptions);
 
     public string HostName { get; init; } = "rabbitmq";
     public int Port { get; init; } = 5672;

@@ -1,11 +1,13 @@
 <Solution>
   <Folder Name="/SolutionItems/">
     <File Path="Auth.md" />
+    <File Path="SolutionPathHelper.cs" />
   </Folder>
   <Project Path="AggregationService.API/AggregationService.API.csproj" />
   <Project Path="AggregationService.Application/AggregationService.Application.csproj" />
   <Project Path="AggregationService.Domain/AggregationService.Domain.csproj" Id="9a6e06d5-e7ef-4f21-a397-d7a2eb77267e" />
   <Project Path="AggregationService.Infrastructure/AggregationService.Infrastructure.csproj" Id="907f9006-1fea-406e-ae9e-2bdd8fe4629d" />
+  <Project Path="AggregationService.IntegrationTests/AggregationService.IntegrationTests.csproj" Id="357efddf-c753-4a11-9933-709d2a71f55d" />
   <Project Path="AggregationService.Tests/AggregationService.Tests.csproj" />
   <Project Path="docker-compose.dcproj">
     <Build />

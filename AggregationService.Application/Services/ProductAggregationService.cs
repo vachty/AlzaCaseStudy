@@ -118,7 +118,10 @@ public class ProductAggregationService(
                 "Dependency {DependencyName} failed. Falling back to partial response.",
                 dependencyName);
 
-            degraded.Add(dependencyName);
+            lock (degraded)
+            {
+                degraded.Add(dependencyName);
+            }
             return default;
         }
     }
