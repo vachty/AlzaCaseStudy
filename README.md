@@ -201,7 +201,11 @@ After startup, open:
 http://localhost:5001
 ```
 
-If running in development mode, OpenAPI/Scalar endpoints are also exposed by the API. The application configures OpenAPI and Scalar in development through the ASP.NET Core startup pipeline. citeturn0commentaryto=functions.getfile14turn0commentaryto=functions.getfile15
+If running in development mode, OpenAPI/Scalar endpoints are also exposed by the API. The application configures OpenAPI and Scalar in development through the ASP.NET Core startup pipeline.
+```text
+http://localhost:5001/scalar/
+```
+
 
 ### RabbitMQ management UI
 
@@ -240,7 +244,7 @@ RabbitMQ configuration is supplied through `MessagingOptions`:
 - `MessagingOptions__ExchangeName`
 - `MessagingOptions__RoutingKey`
 
-These values are provided in the local Docker Compose setup. citeturn0commentaryto=functions.getfile13turn0commentaryto=functions.getfile15
+These values are provided in the local Docker Compose setup.
 
 ---
 
@@ -287,7 +291,7 @@ The API includes:
 - OpenTelemetry tracing
 - OpenTelemetry metrics
 
-This supports local diagnostics and makes the application easier to evolve toward a more production-like cloud deployment model. Startup registration for logging and telemetry is done in the API composition root. citeturn0commentaryto=functions.getfile14turn0commentaryto=functions.getfile15
+This supports local diagnostics and makes the application easier to evolve toward a more production-like cloud deployment model. Startup registration for logging and telemetry is done in the API composition root.
 
 ---
 
@@ -308,8 +312,6 @@ That document describes the intended production direction, including:
 - secrets management
 - TLS everywhere
 - authorization model
-
-citeturn0commentaryto=functions.getfile13
 
 ---
 
