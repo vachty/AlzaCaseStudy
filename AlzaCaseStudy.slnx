@@ -2,6 +2,7 @@
   <Folder Name="/SolutionItems/">
     <File Path="Auth.md" />
     <File Path="SolutionPathHelper.cs" />
+    <File Path="TestContainers.md" />
   </Folder>
   <Project Path="AggregationService.API/AggregationService.API.csproj" />
   <Project Path="AggregationService.Application/AggregationService.Application.csproj" />
