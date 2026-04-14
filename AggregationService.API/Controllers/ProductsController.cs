@@ -1,7 +1,7 @@
 ﻿using AggregationService.Application.Contracts;
 using Microsoft.AspNetCore.Mvc;
 
-namespace AggregationService.Controllers;
+namespace AggregationService.API.Controllers;
 
 [ApiController]
 [Route("api/v1/products")]

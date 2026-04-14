@@ -15,7 +15,7 @@ using Polly;
 using Serilog;
 using Serilog.Events;
 
-namespace AggregationService;
+namespace AggregationService.API;
 
 public static class ServicesExtensions
 {

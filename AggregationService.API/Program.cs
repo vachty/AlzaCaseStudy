@@ -1,4 +1,3 @@
-using AggregationService;
 using AggregationService.API;
 using AggregationService.Application.Caching;
 using Scalar.AspNetCore;
